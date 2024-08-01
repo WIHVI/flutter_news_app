@@ -9,22 +9,19 @@ class RemoteArticlesBloc
   final GetArticleUseCase _getArticleUseCase;
 
   RemoteArticlesBloc(this._getArticleUseCase)
-      : super(const RemoteArticlesLoading()) {
-    on<GetArticlesEvent>(onGetArticles);
-  }
+      : super(const RemoteArticlesLoadingState()) {
+    on<GetArticlesEvent>(
+      (event, emit) async {
+        final dataState = await _getArticleUseCase();
 
-  void onGetArticles(
-    GetArticlesEvent event,
-    Emitter<RemoteArticlesState> emit,
-  ) async {
-    final dataState = await _getArticleUseCase();
+        if (dataState is DataSuccess && dataState.data!.isNotEmpty) {
+          emit(RemoteArticlesDoneState(dataState.data!));
+        }
 
-    if (dataState is DataSuccess && dataState.data!.isNotEmpty) {
-      emit(RemoteArticlesDone(dataState.data!));
-    }
-
-    if (dataState is DataFailed) {
-      emit(RemoteArticlesError(dataState.error!));
-    }
+        if (dataState is DataFailed) {
+          emit(RemoteArticlesErrorState(dataState.error!));
+        }
+      },
+    );
   }
 }
